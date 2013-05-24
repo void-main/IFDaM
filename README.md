@@ -1,5 +1,3 @@
-SimpleSift
-==========
+# IFDaM - Image Feature Detection and Matching
 
-Simple implementation for SIFT. 
-
+Image Feature Detection and Matching. The homework for Computer Vision of ISCAS.
