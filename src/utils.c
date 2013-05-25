@@ -1,6 +1,6 @@
 /*
   Miscellaneous utility functions.
-  
+
   Copyright (C) 2006-2012  Rob Hess <rob@iqengines.com>
 
   @version 1.1.2-20100521
@@ -27,13 +27,13 @@
   Prints an error message and aborts the program.  The error message is
   of the form "Error: ...", where the ... is specified by the \a format
   argument
-  
+
   @param format an error message format string (as with \c printf(3)).
 */
 void fatal_error(char* format, ...)
 {
   va_list ap;
-  
+
   fprintf( stderr, "Error: ");
 
   va_start( ap, format );
@@ -48,13 +48,13 @@ void fatal_error(char* format, ...)
 /*
   Replaces a file's extension, which is assumed to be everything after the
   last dot ('.') character.
-  
+
   @param file the name of a file
-  
+
   @param extn a new extension for \a file; should not include a dot (i.e.
     \c "jpg", not \c ".jpg") unless the new file extension should contain
     two dots.
-    
+
   @return Returns a new string formed as described above.  If \a file does
     not have an extension, this function simply adds one.
 */
@@ -78,10 +78,10 @@ char* replace_extension( const char* file, const char* extn )
 
 /*
   Prepends a path to a filename.
-  
+
   @param path a path
   @param file a file name
-  
+
   @return Returns a new string containing a full path name consisting of
     \a path prepended to \a file.
 */
@@ -100,9 +100,9 @@ char* prepend_path( const char* path, const char* file )
 /*
   A function that removes the path from a filename.  Similar to the Unix
   basename command.
-  
+
   @param pathname a (full) path name
-  
+
   @return Returns the basename of \a pathname.
 */
 char* basename( const char* pathname )
@@ -130,7 +130,7 @@ char* basename( const char* pathname )
   Displays progress in the console with a spinning pinwheel.  Every time this
   function is called, the state of the pinwheel is incremented.  The pinwheel
   has four states that loop indefinitely: '|', '/', '-', '\'.
-  
+
   @param done if 0, this function simply increments the state of the pinwheel;
     otherwise it prints "done"
 */
@@ -138,7 +138,7 @@ void progress( int done )
 {
   char state[4] = { '|', '/', '-', '\\' };
   static int cur = -1;
-  
+
   if( cur == -1 )
     fprintf( stderr, "  " );
 
@@ -178,11 +178,11 @@ void erase_from_stream( FILE* stream, int n )
 
 /*
   Doubles the size of an array with error checking
-  
+
   @param array pointer to an array whose size is to be doubled
   @param n number of elements allocated for \a array
   @param size size in bytes of elements in \a array
-  
+
   @return Returns the new number of elements allocated for \a array.  If no
     memory is available, returns 0.
 */
@@ -224,7 +224,7 @@ double dist_sq_2D( CvPoint2D64f p1, CvPoint2D64f p2 )
 
 /*
   Draws an x on an image.
-  
+
   @param img an image
   @param pt the center point of the x
   @param r the x's radius
@@ -243,23 +243,27 @@ void draw_x( IplImage* img, CvPoint pt, int r, int w, CvScalar color )
 
 /*
   Combines two images by scacking one on top of the other
-  
-  @param img1 top image
-  @param img2 bottom image
-  
+
+  @param img1 left image
+  @param img2 right image
+
   @return Returns the image resulting from stacking \a img1 on top if \a img2
 */
 extern IplImage* stack_imgs( IplImage* img1, IplImage* img2 )
 {
-  IplImage* stacked = cvCreateImage( cvSize( MAX(img1->width, img2->width),
-					     img1->height + img2->height ),
+  IplImage* stacked = cvCreateImage( cvSize( img1->width + img2->width,
+					     2 * MAX(img1->height, img2->height) ),
 				     IPL_DEPTH_8U, 3 );
 
   cvZero( stacked );
   cvSetImageROI( stacked, cvRect( 0, 0, img1->width, img1->height ) );
   cvAdd( img1, stacked, stacked, NULL );
-  cvSetImageROI( stacked, cvRect(0, img1->height, img2->width, img2->height) );
+  cvSetImageROI( stacked, cvRect(img1->width, 0, img2->width, img2->height) );
   cvAdd( img2, stacked, stacked, NULL );
+  IplImage* compare = cvCreateImage( cvSize( MAX(img1->width, img2->width),
+               MAX(img1->height, img2->height) ), IPL_DEPTH_8U, 3 );
+  cvSetImageROI( stacked, cvRect(0, img1->height, img1->width, img1->height) );
+  cvAdd( compare, stacked, stacked, NULL );
   cvResetImageROI( stacked );
 
   return stacked;
@@ -271,7 +275,7 @@ extern IplImage* stack_imgs( IplImage* img1, IplImage* img2 )
   Displays an image, making sure it fits on screen.  cvWaitKey() must be
   called after this function so the event loop is entered and the
   image is displayed.
-  
+
   @param img an image, possibly too large to display on-screen
   @param title the title of the window in which \a img is displayed
 */
@@ -292,7 +296,7 @@ void display_big_img( IplImage* img, char* title )
     {
       img_aspect = (double)(img->width) / img->height;
       scr_aspect = (double)(scr_width) / scr_height;
-      
+
       if( img_aspect > scr_aspect )
 	scale = 0.90 * scr_width / img->width;
       else
@@ -304,7 +308,7 @@ void display_big_img( IplImage* img, char* title )
     }
   else
     small = cvCloneImage( img );
-  
+
   cvNamedWindow( title, 1 );
   cvShowImage( title, small );
   cvReleaseImage( &small );
@@ -326,7 +330,7 @@ void display_big_img( IplImage* img, char* title )
   <li>Esc - exit playback</li>
   <li>Closing the window also exits playback</li>
   </ul>
-  
+
   @param imgs an array of images
   @param n number of images in \a imgs
   @param win_name name of window in which images are displayed
@@ -406,9 +410,9 @@ void vid_view( IplImage** imgs, int n, char* win_name )
 
 /*
   Checks if a HighGUI window is still open or not
-  
+
   @param name the name of the window we're checking
-  
+
   @return Returns 1 if the window named \a name has been closed or 0 otherwise
 */
 int win_closed( char* win_name )

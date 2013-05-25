@@ -10,7 +10,7 @@
 #include <stdio.h>
 
 /* the maximum number of keypoint NN candidates to check during BBF search */
-#define KDTREE_BBF_MAX_NN_CHKS 200
+#define KDTREE_BBF_MAX_NN_CHKS 2000
 
 /* threshold on squared ratio of distances between NN and 2nd NN */
 #define NN_SQ_DIST_RATIO_THR 0.49
@@ -21,7 +21,7 @@ int main( int argc, char** argv )
   struct feature* feat1, * feat2, * feat;
   struct feature** nbrs;
   struct kd_node* kd_root;
-  CvPoint pt1, pt2;
+  CvPoint pt1, pt2, pt3, pt4;
   double d0, d1;
   int n1, n2, k, i, m = 0;
 
@@ -54,8 +54,15 @@ int main( int argc, char** argv )
       {
         pt1 = cvPoint( cvRound( feat->x ), cvRound( feat->y ) );
         pt2 = cvPoint( cvRound( nbrs[0]->x ), cvRound( nbrs[0]->y ) );
-        pt2.y += img1->height;
-        cvLine( stacked, pt1, pt2, CV_RGB(255,0,255), 1, 8, 0 );
+        pt3 = cvPoint( cvRound( feat->x ), cvRound( feat->y + img1->height ) );
+        pt4 = cvPoint( cvRound( nbrs[0]->x ), cvRound( nbrs[0]->y + img1->height ) );
+        pt2.x += img1->width;
+        cvLine( stacked, pt1, pt2, CV_RGB(0,128,128), 1, 16, 0 );
+        draw_x( stacked, pt1, 1, 4, CV_RGB(0, 0, 255));
+        draw_x( stacked, pt2, 1, 4, CV_RGB(255, 255, 0));
+        cvLine( stacked, pt3, pt4, CV_RGB(255,255,255), 1, 16, 0 );
+        draw_x( stacked, pt3, 1, 4, CV_RGB(0, 0, 255));
+        draw_x( stacked, pt4, 1, 4, CV_RGB(255, 255, 0));
         m++;
         feat1[i].fwd_match = nbrs[0];
       }
@@ -64,7 +71,7 @@ int main( int argc, char** argv )
     }
 
   fprintf( stderr, "Found %d total matches\n", m );
-  display_big_img( stacked, "Matches" );
+  display_big_img( stacked, "Results" );
   cvWaitKey( 0 );
 
   cvReleaseImage( &stacked );
