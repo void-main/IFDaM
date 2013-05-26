@@ -5,7 +5,7 @@ INC_DIR	= ../include
 LIB_DIR	= ../lib
 INCL	= -I$(INC_DIR) `pkg-config --cflags opencv gtk+-2.0`
 LIBS	= -L$(LIB_DIR) -lifdam `pkg-config --libs opencv gtk+-2.0`
-OBJ	= imgfeatures.o utils.o sift.o kdtree.o minpq.o
+OBJ	= imgfeatures.o utils.o sift.o kdtree.o minpq.o xform.o
 BIN     = match
 
 all: $(BIN) libifdam.a
@@ -31,6 +31,9 @@ kdtree.o: kdtree.c $(INC_DIR)/kdtree.h
 
 minpq.o: minpq.c $(INC_DIR)/minpq.h
 	$(CC) $(CFLAGS) $(INCL) -c minpq.c -o $@
+
+xform.o: xform.c $(INC_DIR)/xform.h
+	$(CC) $(CFLAGS) $(INCL) -c xform.c -o $@
 
 clean:
 	rm -f *~ *.o core

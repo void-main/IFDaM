@@ -2,6 +2,7 @@
 #include "imgfeatures.h"
 #include "kdtree.h"
 #include "utils.h"
+#include "xform.h"
 
 #include <cv.h>
 #include <cxcore.h>
@@ -10,10 +11,10 @@
 #include <stdio.h>
 
 /* the maximum number of keypoint NN candidates to check during BBF search */
-#define KDTREE_BBF_MAX_NN_CHKS 2000
+#define KDTREE_BBF_MAX_NN_CHKS 200
 
 /* threshold on squared ratio of distances between NN and 2nd NN */
-#define NN_SQ_DIST_RATIO_THR 0.49
+#define NN_SQ_DIST_RATIO_THR 0.6
 
 int main( int argc, char** argv )
 {
@@ -43,38 +44,53 @@ int main( int argc, char** argv )
   fprintf( stderr, "Building kd tree...\n" );
   kd_root = kdtree_build( feat2, n2 );
   for( i = 0; i < n1; i++ )
-    {
-      feat = feat1 + i;
-      k = kdtree_bbf_knn( kd_root, feat, 2, &nbrs, KDTREE_BBF_MAX_NN_CHKS );
-      if( k == 2 )
   {
-    d0 = descr_dist_sq( feat, nbrs[0] );
-    d1 = descr_dist_sq( feat, nbrs[1] );
-    if( d0 < d1 * NN_SQ_DIST_RATIO_THR )
+    feat = feat1 + i;
+    k = kdtree_bbf_knn( kd_root, feat, 2, &nbrs, KDTREE_BBF_MAX_NN_CHKS );
+    if( k == 2 )
+    {
+      d0 = descr_dist_sq( feat, nbrs[0] );
+      d1 = descr_dist_sq( feat, nbrs[1] );
+      if( d0 < d1 * NN_SQ_DIST_RATIO_THR )
       {
-        pt1 = cvPoint( cvRound( feat->x ), cvRound( feat->y ) );
-        pt2 = cvPoint( cvRound( nbrs[0]->x ), cvRound( nbrs[0]->y ) );
-        pt3 = cvPoint( cvRound( feat->x ), cvRound( feat->y + img1->height ) );
-        pt4 = cvPoint( cvRound( nbrs[0]->x ), cvRound( nbrs[0]->y + img1->height ) );
-        pt2.x += img1->width;
-        cvLine( stacked, pt1, pt2, CV_RGB(0,128,128), 1, 16, 0 );
-        draw_x( stacked, pt1, 1, 4, CV_RGB(0, 0, 255));
-        draw_x( stacked, pt2, 1, 4, CV_RGB(255, 255, 0));
-        cvLine( stacked, pt3, pt4, CV_RGB(255,255,255), 1, 16, 0 );
-        draw_x( stacked, pt3, 1, 4, CV_RGB(0, 0, 255));
-        draw_x( stacked, pt4, 1, 4, CV_RGB(255, 255, 0));
         m++;
         feat1[i].fwd_match = nbrs[0];
       }
+    }
+    free( nbrs );
   }
-      free( nbrs );
+
+  CvMat* H;
+  int nr;
+  struct feature** inliner;
+  H = ransac_xform( feat1, n1, FEATURE_FWD_MATCH, lsq_homog, 4, 0.01,
+   homog_xfer_err, 3.0, &inliner, &nr);
+  if( H )
+  {
+    cvReleaseMat( &H );
+
+    for( i = 0; i < nr; i++ )
+    {
+      pt1 = cvPoint( cvRound( inliner[i]->x ), cvRound( inliner[i]->y ) );
+      pt2 = cvPoint( cvRound( inliner[i]->fwd_match->x ), cvRound( inliner[i]->fwd_match->y ) );
+      pt3 = cvPoint( cvRound( inliner[i]->x ), cvRound( inliner[i]->y + img1->height ) );
+      pt4 = cvPoint( cvRound( inliner[i]->fwd_match->x ), cvRound( inliner[i]->fwd_match->y + img1->height ) );
+      pt2.x += img1->width;
+      cvLine( stacked, pt1, pt2, CV_RGB(0,128,128), 1, 16, 0 );
+      draw_x( stacked, pt1, 1, 4, CV_RGB(0, 0, 255));
+      draw_x( stacked, pt2, 1, 4, CV_RGB(255, 255, 0));
+      cvLine( stacked, pt3, pt4, CV_RGB(255,255,255), 1, 16, 0 );
+      draw_x( stacked, pt3, 1, 4, CV_RGB(0, 0, 255));
+      draw_x( stacked, pt4, 1, 4, CV_RGB(255, 255, 0));
     }
 
-  fprintf( stderr, "Found %d total matches\n", m );
-  display_big_img( stacked, "Results" );
-  cvWaitKey( 0 );
+    fprintf( stderr, "Found %d total matches after ransac\n", nr );
+    display_big_img( stacked, "SIFT + RANSAC" );
+    cvWaitKey( 0 );
 
-  cvReleaseImage( &stacked );
+    cvReleaseImage( &stacked );
+  }
+
   cvReleaseImage( &img1 );
   cvReleaseImage( &img2 );
   kdtree_release( kd_root );

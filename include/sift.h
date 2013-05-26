@@ -1,19 +1,19 @@
 /**@file
    Functions for detecting SIFT image features.
-   
+
    For more information, refer to:
-   
+
    Lowe, D.  Distinctive image features from scale-invariant keypoints.
    <EM>International Journal of Computer Vision, 60</EM>, 2 (2004),
    pp.91--110.
-  
+
    Copyright (C) 2006-2012  Rob Hess <rob@iqengines.com>
-   
+
    Note: The SIFT algorithm is patented in the United States and cannot be
    used in commercial products without a license from the University of
    British Columbia.  For more information, refer to the file LICENSE.ubc
    that accompanied this distribution.
-   
+
    @version 1.1.2-20100521
 */
 
@@ -47,7 +47,7 @@ struct feature;
 #define SIFT_SIGMA 1.6
 
 /** default threshold on keypoint contrast |D(x)| */
-#define SIFT_CONTR_THR 0.04
+#define SIFT_CONTR_THR 0.02
 
 /** default threshold on keypoint ratio of principle curvatures */
 #define SIFT_CURV_THR 10
