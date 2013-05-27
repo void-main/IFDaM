@@ -14,7 +14,7 @@
 #define KDTREE_BBF_MAX_NN_CHKS 200
 
 /* threshold on squared ratio of distances between NN and 2nd NN */
-#define NN_SQ_DIST_RATIO_THR 0.6
+#define NN_SQ_DIST_RATIO_THR 0.5
 
 int main( int argc, char** argv )
 {
@@ -41,7 +41,7 @@ int main( int argc, char** argv )
   n1 = sift_features( img1, &feat1 );
   fprintf( stderr, "Finding features in %s...\n", argv[2] );
   n2 = sift_features( img2, &feat2 );
-  fprintf( stderr, "Building kd tree...\n" );
+  fprintf( stderr, "Finding matches...\n" );
   kd_root = kdtree_build( feat2, n2 );
   for( i = 0; i < n1; i++ )
   {
@@ -84,7 +84,14 @@ int main( int argc, char** argv )
       draw_x( stacked, pt4, 1, 4, CV_RGB(255, 255, 0));
     }
 
-    fprintf( stderr, "Found %d total matches after ransac\n", nr );
+    char msg[128];
+    sprintf( msg, "Found %d total matches", nr );
+
+    CvPoint textPosition = cvPoint(cvRound(img1->width * 1.3), cvRound(img1->height * 1.5)) ;
+    CvFont  font;
+    cvInitFont(&font, CV_FONT_HERSHEY_DUPLEX, 1.0f, 1.0f, 0, 2, CV_AA);
+    cvPutText(stacked, msg, textPosition, &font, CV_RGB(255, 255, 255));
+
     display_big_img( stacked, "SIFT + RANSAC" );
     cvWaitKey( 0 );
 
